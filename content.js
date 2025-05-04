@@ -39,21 +39,9 @@ function onMutation(mutations) {
 
 // Main function to find and process LinkedIn posts
 function processLinkedInPosts() {
-    // Find all post containers that haven't been processed yet
-    // Using multiple selectors to catch different LinkedIn post types and layouts
+    // Specifically target the LinkedIn post text using the exact selector
     const postSelectors = [
-        // Feed post containers
-        'div.feed-shared-update-v2:not([data-summarizer-processed])',
-        // Article posts
-        'div.feed-shared-article:not([data-summarizer-processed])',
-        // Generic post containers
-        'div.ember-view.occludable-update:not([data-summarizer-processed])',
-        // Container with post content
-        'div.feed-shared-wrapper:not([data-summarizer-processed])',
-        // More general approach
-        'div[data-id^="urn:li:activity"]:not([data-summarizer-processed])',
-        // Another container pattern
-        'div.update-components-text:not([data-summarizer-processed])'
+        'div.update-components-text.relative.update-components-update-v2__commentary:not([data-summarizer-processed])'
     ];
 
     // Use all selectors and combine results
@@ -63,71 +51,18 @@ function processLinkedInPosts() {
             const elements = document.querySelectorAll(selector);
             elements.forEach(el => postContainers.push(el));
         } catch (e) {
-            // Some browsers might not support certain selectors
             console.debug(`Selector not supported: ${selector}`);
         }
     });
 
-    // Make the array unique (no duplicates)
-    postContainers = [...new Set(postContainers)];
+    console.log(`Found ${postContainers.length} unprocessed LinkedIn posts`);
 
-    console.log(`Found ${postContainers.length} unprocessed posts`);
-
-    postContainers.forEach(post => {
+    postContainers.forEach(contentDiv => {
         // Mark this post as processed
-        post.setAttribute('data-summarizer-processed', 'true');
+        contentDiv.setAttribute('data-summarizer-processed', 'true');
 
-        // Specifically target only the main post content, not comments
-        // First, try the most specific selectors
-        const specificContentSelectors = [
-            // Specific class for post content (not comments)
-            '.update-components-text.relative.update-components-update-v2__commentary',
-            '.feed-shared-update-v2__description',
-            '.update-components-text:not(.comments-comment-item__main-content)',
-            '.feed-shared-inline-show-more-text'
-        ];
-
-        let contentDiv = null;
-
-        // Try the specific selectors first
-        for (const selector of specificContentSelectors) {
-            const element = post.querySelector(selector);
-            if (element && element.textContent.trim().length > 30) {
-                contentDiv = element;
-                break;
-            }
-        }
-
-        // If specific selectors fail, try more general ones but exclude comment sections
-        if (!contentDiv) {
-            // More general selectors, but excluding comments
-            const generalContentSelectors = [
-                'span.break-words',
-                'div.feed-shared-text',
-                'p',
-                'article'
-            ];
-
-            for (const selector of generalContentSelectors) {
-                // Check if this element is NOT inside a comments container
-                const elements = post.querySelectorAll(selector);
-                for (const el of elements) {
-                    // Skip if this element is inside a comments section
-                    if (
-                        !el.closest('.feed-shared-update-v2__comments-container') &&
-                        !el.closest('.comments-comment-item') &&
-                        !el.closest('.comments-comments-list') &&
-                        el.textContent.trim().length > 30
-                    ) {
-                        contentDiv = el;
-                        break;
-                    }
-                }
-                if (contentDiv) break;
-            }
-        }
-
-        if (!contentDiv) return; // Skip if no content found
+        // Skip if the content is too short (likely not a meaningful post)
+        if (contentDiv.textContent.trim().length < 30) return;
 
         // Create summarize button
         const summarizeBtn = document.createElement('button');
@@ -152,45 +87,28 @@ function processLinkedInPosts() {
         summaryContainer.appendChild(loadingIndicator);
         summaryContainer.appendChild(summaryContent);
 
-        // Find the right location to inject our button - look specifically for the social actions area
-        // which appears between the post content and comments
-        const possibleInsertionPoints = [
-            '.social-details-social-counts',
-            '.feed-shared-social-actions',
-            '.feed-shared-social-counts-module',
-            '[data-control-name="comment"]',
-            '[aria-label="Like"]',
-            '[aria-label="Comment"]'
-        ];
+        // Find the parent container of the post to place our button after the content
+        const postContainer = contentDiv.closest('.feed-shared-update-v2') ||
+            contentDiv.closest('.ember-view.occludable-update') ||
+            contentDiv.closest('[data-id^="urn:li:activity"]');
 
-        let insertPoint = null;
+        if (postContainer) {
+            // Try to find the social actions area to place the button near the like/comment buttons
+            const socialActionsArea = postContainer.querySelector('.social-details-social-counts') ||
+                postContainer.querySelector('.feed-shared-social-actions') ||
+                postContainer.querySelector('.feed-shared-social-counts-module');
 
-        // Try to find the social actions area (between post and comments)
-        for (const selector of possibleInsertionPoints) {
-            const element = post.querySelector(selector);
-            if (element) {
-                insertPoint = element;
-                break;
-            }
-        }
-
-        // If we found an insertion point, insert our button
-        if (insertPoint) {
-            // Try to insert near the actions bar
-            const parentEl = insertPoint.parentNode;
-
-            if (parentEl) {
-                // Insert after the insertion point
-                if (insertPoint.nextSibling) {
-                    parentEl.insertBefore(summarizeBtn, insertPoint.nextSibling);
-                    parentEl.insertBefore(summaryContainer, summarizeBtn.nextSibling);
-                } else {
-                    parentEl.appendChild(summarizeBtn);
-                    parentEl.appendChild(summaryContainer);
-                }
+            if (socialActionsArea) {
+                // Insert near the social actions area
+                socialActionsArea.parentNode.insertBefore(summarizeBtn, socialActionsArea.nextSibling);
+                socialActionsArea.parentNode.insertBefore(summaryContainer, summarizeBtn.nextSibling);
+            } else {
+                // If no social actions area, insert directly after the content div
+                contentDiv.parentNode.insertBefore(summarizeBtn, contentDiv.nextSibling);
+                contentDiv.parentNode.insertBefore(summaryContainer, summarizeBtn.nextSibling);
             }
         } else {
-            // If no action bar found, insert directly after the content div
+            // Fallback: Insert directly after the content div
             contentDiv.parentNode.insertBefore(summarizeBtn, contentDiv.nextSibling);
             contentDiv.parentNode.insertBefore(summaryContainer, summarizeBtn.nextSibling);
         }
