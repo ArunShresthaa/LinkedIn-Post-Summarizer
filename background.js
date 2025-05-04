@@ -37,22 +37,47 @@ async function summarizeAndTagText(text) {
     // Gemini 2.0 Flash API endpoint
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
-    // Prepare the prompt for structured output
-    const prompt = `Please analyze the following LinkedIn post:
-    
-    ${text}
-    
-    Provide:
-    1. A concise summary of the key points in 2-3 short sentences.
-    2. Classify this post with the most appropriate tag from these options: advice, achievement, post, advertisement.
-    
-    Format your response as structured JSON with "summary" and "tag" fields.`;
+    // Define the structured output schema
+    const structuredOutputSchema = {
+        "type": "object",
+        "properties": {
+            "summary": {
+                "type": "string",
+                "description": "A concise summary of the LinkedIn post in 2-3 short sentences."
+            },
+            "tag": {
+                "type": "string",
+                "enum": [
+                    "advice",
+                    "achievement",
+                    "post",
+                    "advertisement",
+                    "announcement",
+                    "opinion",
+                    "question",
+                    "job",
+                    "event",
+                    "milestone",
+                    "story",
+                    "news",
+                    "collaboration",
+                    "testimonial"
+                ],
+                "description": "Classification of the LinkedIn post content."
+            }
+        },
+        "required": ["summary", "tag"]
+    };
 
     // Prepare the API request with structured output format
     const requestBody = {
         contents: [{
             parts: [{
-                text: prompt
+                text: `Please analyze the following LinkedIn post:
+                
+                ${text}
+                
+                Provide a concise summary of the key points in 2-3 short sentences and classify this post with the most appropriate tag.`
             }]
         }],
         generationConfig: {
@@ -63,9 +88,20 @@ async function summarizeAndTagText(text) {
         },
         systemInstruction: {
             parts: [{
-                text: "Return a JSON object with 'summary' and 'tag' fields. The tag should be one of: advice, achievement, post, advertisement."
+                text: "You are a helpful assistant that summarizes LinkedIn posts. You must provide a structured output with a concise summary and categorize the post."
             }]
-        }
+        },
+        tools: [
+            {
+                functionDeclarations: [
+                    {
+                        name: "summarizeLinkedInPost",
+                        description: "Summarize and classify a LinkedIn post",
+                        parameters: structuredOutputSchema
+                    }
+                ]
+            }
+        ]
     };
 
     try {
@@ -84,13 +120,34 @@ async function summarizeAndTagText(text) {
 
         const data = await response.json();
 
-        // Extract the response from Gemini
-        if (data.candidates && data.candidates[0]?.content?.parts && data.candidates[0].content.parts[0]?.text) {
+        // Check if we have structured output (tool calls)
+        if (data.candidates &&
+            data.candidates[0] &&
+            data.candidates[0].content &&
+            data.candidates[0].content.parts &&
+            data.candidates[0].content.parts[0] &&
+            data.candidates[0].content.parts[0].functionCall) {
+
+            // Extract the function call result
+            const functionCall = data.candidates[0].content.parts[0].functionCall;
+
+            if (functionCall.name === "summarizeLinkedInPost" && functionCall.args) {
+                return {
+                    summary: functionCall.args.summary,
+                    tag: functionCall.args.tag.toLowerCase() // Normalize tag to lowercase
+                };
+            }
+        }
+
+        // Fallback if structured output is not available
+        if (data.candidates &&
+            data.candidates[0]?.content?.parts &&
+            data.candidates[0].content.parts[0]?.text) {
+
             const responseText = data.candidates[0].content.parts[0].text.trim();
 
-            // Parse the JSON response
+            // Try to parse any JSON in the response
             try {
-                // The response might contain markdown code blocks, so we need to extract just the JSON
                 const jsonMatch = responseText.match(/```json\s*([\s\S]*?)\s*```/) ||
                     responseText.match(/```\s*([\s\S]*?)\s*```/) ||
                     [null, responseText];
@@ -104,21 +161,22 @@ async function summarizeAndTagText(text) {
                         summary: parsedResponse.summary,
                         tag: parsedResponse.tag.toLowerCase() // Normalize tag to lowercase
                     };
-                } else {
-                    throw new Error('Response missing required fields');
                 }
             } catch (parseError) {
-                console.error('Failed to parse structured response:', parseError);
-
-                // Fallback: If we can't parse the JSON, just return the text as summary
-                return {
-                    summary: responseText,
-                    tag: 'post' // Default tag if parsing fails
-                };
+                console.error('Failed to parse response:', parseError);
             }
-        } else {
-            throw new Error('Unexpected API response format');
+
+            // Second fallback: Try to extract summary and tag from text
+            const tagMatch = responseText.match(/tag:\s*([a-zA-Z]+)/i);
+            const summaryMatch = responseText.match(/summary:\s*([^]*?)(?:\n|$)/i);
+
+            return {
+                summary: summaryMatch ? summaryMatch[1].trim() : "Summary extraction failed",
+                tag: tagMatch ? tagMatch[1].toLowerCase().trim() : "post" // Default tag if parsing fails
+            };
         }
+
+        throw new Error('Unexpected API response format');
     } catch (error) {
         console.error('API request failed:', error);
         throw new Error(`Failed to analyze post: ${error.message}`);

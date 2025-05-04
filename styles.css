@@ -116,6 +116,57 @@
     color: #424242;
 }
 
+.linkedin-tag-pill[data-tag="announcement"] {
+    background-color: #ede7f6;
+    color: #5e35b1;
+}
+
+.linkedin-tag-pill[data-tag="opinion"] {
+    background-color: #fce4ec;
+    color: #c2185b;
+}
+
+.linkedin-tag-pill[data-tag="question"] {
+    background-color: #e3f2fd;
+    color: #1565c0;
+}
+
+.linkedin-tag-pill[data-tag="job"] {
+    background-color: #f1f8e9;
+    color: #33691e;
+}
+
+.linkedin-tag-pill[data-tag="event"] {
+    background-color: #fff8e1;
+    color: #f9a825;
+}
+
+.linkedin-tag-pill[data-tag="milestone"] {
+    background-color: #fce4ec;
+    color: #880e4f;
+}
+
+.linkedin-tag-pill[data-tag="story"] {
+    background-color: #e0f7fa;
+    color: #006064;
+}
+
+.linkedin-tag-pill[data-tag="news"] {
+    background-color: #f3e5f5;
+    color: #6a1b9a;
+}
+
+.linkedin-tag-pill[data-tag="collaboration"] {
+    background-color: #e8eaf6;
+    color: #303f9f;
+}
+
+.linkedin-tag-pill[data-tag="testimonial"] {
+    background-color: #f1f8f9;
+    color: #004d40;
+}
+
+
 /* Adjust for dark mode */
 @media (prefers-color-scheme: dark) {
     .linkedin-toggle-btn {
@@ -165,4 +216,57 @@
         background-color: #424242;
         color: #eeeeee;
     }
+
+    @media (prefers-color-scheme: dark) {
+        .linkedin-tag-pill[data-tag="announcement"] {
+            background-color: #4a148c;
+            color: #ede7f6;
+        }
+
+        .linkedin-tag-pill[data-tag="opinion"] {
+            background-color: #880e4f;
+            color: #fce4ec;
+        }
+
+        .linkedin-tag-pill[data-tag="question"] {
+            background-color: #0d47a1;
+            color: #e3f2fd;
+        }
+
+        .linkedin-tag-pill[data-tag="job"] {
+            background-color: #1b5e20;
+            color: #f1f8e9;
+        }
+
+        .linkedin-tag-pill[data-tag="event"] {
+            background-color: #f57f17;
+            color: #fff8e1;
+        }
+
+        .linkedin-tag-pill[data-tag="milestone"] {
+            background-color: #4a148c;
+            color: #fce4ec;
+        }
+
+        .linkedin-tag-pill[data-tag="story"] {
+            background-color: #004d40;
+            color: #e0f7fa;
+        }
+
+        .linkedin-tag-pill[data-tag="news"] {
+            background-color: #311b92;
+            color: #f3e5f5;
+        }
+
+        .linkedin-tag-pill[data-tag="collaboration"] {
+            background-color: #1a237e;
+            color: #e8eaf6;
+        }
+
+        .linkedin-tag-pill[data-tag="testimonial"] {
+            background-color: #00695c;
+            color: #f1f8f9;
+        }
+    }
+
 }
