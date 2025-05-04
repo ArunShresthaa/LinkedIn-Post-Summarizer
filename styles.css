@@ -1,7 +1,7 @@
 /* Styles for the LinkedIn post summarizer extension */
 
-/* Summarize button */
-.linkedin-summarize-btn {
+/* Toggle button (previously summarize button) */
+.linkedin-toggle-btn {
     background-color: #f3f2f1;
     border: none;
     border-radius: 16px;
@@ -22,7 +22,7 @@
     /* Higher z-index to prevent it from being hidden */
 }
 
-.linkedin-summarize-btn:hover {
+.linkedin-toggle-btn:hover {
     background-color: #e7f3ff;
     color: #0045ac;
 }
@@ -74,16 +74,56 @@
     color: #333;
     font-size: 14px;
     line-height: 1.5;
+    margin-bottom: 10px;
+}
+
+/* Tag container */
+.linkedin-tag-container {
+    margin-top: 8px;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Tag pills */
+.linkedin-tag-pill {
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-block;
+}
+
+/* Tag colors - light mode */
+.linkedin-tag-pill[data-tag="advice"] {
+    background-color: #e1f5fe;
+    color: #0277bd;
+}
+
+.linkedin-tag-pill[data-tag="achievement"] {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+}
+
+.linkedin-tag-pill[data-tag="advertisement"] {
+    background-color: #fff3e0;
+    color: #e65100;
+}
+
+.linkedin-tag-pill[data-tag="post"] {
+    background-color: #eeeeee;
+    color: #424242;
 }
 
 /* Adjust for dark mode */
 @media (prefers-color-scheme: dark) {
-    .linkedin-summarize-btn {
+    .linkedin-toggle-btn {
         background-color: #1d2226;
         color: #70b5f9;
     }
 
-    .linkedin-summarize-btn:hover {
+    .linkedin-toggle-btn:hover {
         background-color: #283136;
     }
 
@@ -103,5 +143,26 @@
 
     .linkedin-summary-content {
         color: #e6e6e6;
+    }
+
+    /* Tag colors - dark mode */
+    .linkedin-tag-pill[data-tag="advice"] {
+        background-color: #01579b;
+        color: #e1f5fe;
+    }
+
+    .linkedin-tag-pill[data-tag="achievement"] {
+        background-color: #1b5e20;
+        color: #e8f5e9;
+    }
+
+    .linkedin-tag-pill[data-tag="advertisement"] {
+        background-color: #bf360c;
+        color: #fff3e0;
+    }
+
+    .linkedin-tag-pill[data-tag="post"] {
+        background-color: #424242;
+        color: #eeeeee;
     }
 }

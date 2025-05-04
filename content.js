@@ -67,7 +67,7 @@ function processLinkedInPosts() {
         // Create toggle button (hidden initially, will be shown once summary is ready)
         const toggleBtn = document.createElement('button');
         toggleBtn.className = 'linkedin-toggle-btn';
-        toggleBtn.textContent = '✨ Hide Summary';
+        toggleBtn.textContent = '✨ Hide Summary & Tags';
         toggleBtn.style.display = 'none';
 
         // Create summary container
@@ -77,15 +77,20 @@ function processLinkedInPosts() {
         // Create loading indicator
         const loadingIndicator = document.createElement('div');
         loadingIndicator.className = 'linkedin-summary-loading';
-        loadingIndicator.textContent = 'Generating summary...';
+        loadingIndicator.textContent = 'Analyzing post...';
 
         // Create summary content container
         const summaryContent = document.createElement('div');
         summaryContent.className = 'linkedin-summary-content';
 
+        // Create tag container
+        const tagContainer = document.createElement('div');
+        tagContainer.className = 'linkedin-tag-container';
+
         // Append elements
         summaryContainer.appendChild(loadingIndicator);
         summaryContainer.appendChild(summaryContent);
+        summaryContainer.appendChild(tagContainer);
 
         // Find the parent container of the post to place our summary after the content
         const postContainer = contentDiv.closest('.feed-shared-update-v2') ||
@@ -113,31 +118,41 @@ function processLinkedInPosts() {
             contentDiv.parentNode.insertBefore(summaryContainer, toggleBtn.nextSibling);
         }
 
-        // Automatically generate summary
+        // Automatically generate summary and tags
         try {
             // Get the post text
             const postText = contentDiv.textContent.trim();
 
-            console.log("Auto-summarizing post:", postText.substring(0, 100) + "...");
+            console.log("Analyzing post:", postText.substring(0, 100) + "...");
 
-            // Send message to background script to get summary
+            // Send message to background script to get summary and tags
             chrome.runtime.sendMessage(
                 { action: 'summarize', text: postText },
                 response => {
                     loadingIndicator.style.display = 'none';
-                    toggleBtn.style.display = 'inline-block'; // Show toggle button when summary is ready
+                    toggleBtn.style.display = 'inline-block'; // Show toggle button when analysis is ready
 
                     if (response.error) {
                         summaryContent.textContent = `Error: ${response.error}`;
                     } else {
+                        // Display summary
                         summaryContent.innerHTML = `<strong>Summary:</strong> ${response.summary}`;
+
+                        // Create and display tag
+                        const tagPill = document.createElement('span');
+                        tagPill.className = 'linkedin-tag-pill';
+                        tagPill.setAttribute('data-tag', response.tag || 'post');
+                        tagPill.textContent = response.tag || 'post';
+
+                        tagContainer.innerHTML = '<strong>Tag:</strong> ';
+                        tagContainer.appendChild(tagPill);
                     }
                 }
             );
         } catch (error) {
             loadingIndicator.style.display = 'none';
             summaryContent.textContent = `Error: ${error.message}`;
-            console.error("Summarization error:", error);
+            console.error("Analysis error:", error);
         }
 
         // Add click event to the toggle button
@@ -145,11 +160,13 @@ function processLinkedInPosts() {
             // Toggle summary visibility
             if (summaryContainer.style.display === 'none') {
                 summaryContainer.style.display = 'block';
-                toggleBtn.textContent = '✨ Hide Summary';
+                toggleBtn.textContent = '✨ Hide Summary & Tags';
             } else {
                 summaryContainer.style.display = 'none';
-                toggleBtn.textContent = '✨ Show Summary';
+                toggleBtn.textContent = '✨ Show Summary & Tags';
             }
         });
     });
 }
+
+// Removed the applyTagStyling function as we're now using CSS classes with data attributes
