@@ -40,7 +40,7 @@ function onMutation(mutations) {
 // Main function to find and process LinkedIn posts
 function processLinkedInPosts() {
     // Find all post containers that haven't been processed yet
-    // We're using multiple selectors to catch different LinkedIn post types and layouts
+    // Using multiple selectors to catch different LinkedIn post types and layouts
     const postSelectors = [
         // Feed post containers
         'div.feed-shared-update-v2:not([data-summarizer-processed])',
@@ -53,9 +53,7 @@ function processLinkedInPosts() {
         // More general approach
         'div[data-id^="urn:li:activity"]:not([data-summarizer-processed])',
         // Another container pattern
-        'div.update-components-text:not([data-summarizer-processed])',
-        // Any container with a span.break-words inside
-        'div:has(span.break-words):not([data-summarizer-processed])'
+        'div.update-components-text:not([data-summarizer-processed])'
     ];
 
     // Use all selectors and combine results
@@ -65,7 +63,7 @@ function processLinkedInPosts() {
             const elements = document.querySelectorAll(selector);
             elements.forEach(el => postContainers.push(el));
         } catch (e) {
-            // Some browsers might not support certain selectors like :has()
+            // Some browsers might not support certain selectors
             console.debug(`Selector not supported: ${selector}`);
         }
     });
@@ -79,23 +77,20 @@ function processLinkedInPosts() {
         // Mark this post as processed
         post.setAttribute('data-summarizer-processed', 'true');
 
-        // Find the post content using multiple possible selectors
-        const contentSelectors = [
+        // Specifically target only the main post content, not comments
+        // First, try the most specific selectors
+        const specificContentSelectors = [
+            // Specific class for post content (not comments)
+            '.update-components-text.relative.update-components-update-v2__commentary',
             '.feed-shared-update-v2__description',
-            '.update-components-text',
-            '.feed-shared-inline-show-more-text',
-            '.break-words',
-            'span.break-words',
-            'span.break-words.tvm-parent-container',
-            'div.feed-shared-text',
-            'div.feed-shared-text-view',
-            'p',
-            'article'
+            '.update-components-text:not(.comments-comment-item__main-content)',
+            '.feed-shared-inline-show-more-text'
         ];
 
         let contentDiv = null;
 
-        for (const selector of contentSelectors) {
+        // Try the specific selectors first
+        for (const selector of specificContentSelectors) {
             const element = post.querySelector(selector);
             if (element && element.textContent.trim().length > 30) {
                 contentDiv = element;
@@ -103,15 +98,32 @@ function processLinkedInPosts() {
             }
         }
 
-        // If we still can't find content, check for any substantial text in the post
+        // If specific selectors fail, try more general ones but exclude comment sections
         if (!contentDiv) {
-            // Look for any element with substantial text
-            const allElements = post.querySelectorAll('*');
-            for (const el of allElements) {
-                if (el.textContent && el.textContent.trim().length > 100) {
-                    contentDiv = el;
-                    break;
+            // More general selectors, but excluding comments
+            const generalContentSelectors = [
+                'span.break-words',
+                'div.feed-shared-text',
+                'p',
+                'article'
+            ];
+
+            for (const selector of generalContentSelectors) {
+                // Check if this element is NOT inside a comments container
+                const elements = post.querySelectorAll(selector);
+                for (const el of elements) {
+                    // Skip if this element is inside a comments section
+                    if (
+                        !el.closest('.feed-shared-update-v2__comments-container') &&
+                        !el.closest('.comments-comment-item') &&
+                        !el.closest('.comments-comments-list') &&
+                        el.textContent.trim().length > 30
+                    ) {
+                        contentDiv = el;
+                        break;
+                    }
                 }
+                if (contentDiv) break;
             }
         }
 
@@ -140,21 +152,20 @@ function processLinkedInPosts() {
         summaryContainer.appendChild(loadingIndicator);
         summaryContainer.appendChild(summaryContent);
 
-        // Find the right location to inject our button - try multiple possible locations
+        // Find the right location to inject our button - look specifically for the social actions area
+        // which appears between the post content and comments
         const possibleInsertionPoints = [
-            '.feed-shared-social-actions',
             '.social-details-social-counts',
+            '.feed-shared-social-actions',
             '.feed-shared-social-counts-module',
-            '.feed-shared-actions-button',
-            '.update-components-actor__sub-description',
-            '.social-details-social-activity',
-            'button[aria-label="Like"]',
-            '[aria-label="Comment"]',
-            '[aria-label="Share"]'
+            '[data-control-name="comment"]',
+            '[aria-label="Like"]',
+            '[aria-label="Comment"]'
         ];
 
         let insertPoint = null;
 
+        // Try to find the social actions area (between post and comments)
         for (const selector of possibleInsertionPoints) {
             const element = post.querySelector(selector);
             if (element) {
@@ -179,7 +190,7 @@ function processLinkedInPosts() {
                 }
             }
         } else {
-            // If no action bar found, insert directly after the content
+            // If no action bar found, insert directly after the content div
             contentDiv.parentNode.insertBefore(summarizeBtn, contentDiv.nextSibling);
             contentDiv.parentNode.insertBefore(summaryContainer, summarizeBtn.nextSibling);
         }
