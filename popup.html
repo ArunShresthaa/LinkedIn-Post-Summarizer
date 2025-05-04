@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>LinkedIn Post Summarizer</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            width: 300px;
+            padding: 16px;
+        }
+
+        h1 {
+            font-size: 18px;
+            margin-top: 0;
+            color: #0A66C2;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        label {
+            font-weight: 500;
+            margin-bottom: 4px;
+            display: block;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        .info {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .button-container {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 8px;
+        }
+
+        button {
+            background-color: #0A66C2;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        button:hover {
+            background-color: #004182;
+        }
+
+        .status {
+            margin-top: 12px;
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .success {
+            background-color: #e6f4ea;
+            color: #137333;
+        }
+
+        .error {
+            background-color: #fce8e6;
+            color: #c5221f;
+        }
+
+        .footer {
+            margin-top: 16px;
+            font-size: 12px;
+            color: #666;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>LinkedIn Post Summarizer</h1>
+
+    <div class="container">
+        <div>
+            <label for="apiKey">Gemini API Key:</label>
+            <input type="text" id="apiKey" placeholder="Enter your Gemini API key">
+            <p class="info">Get your API key from <a href="https://makersuite.google.com/app/apikey"
+                    target="_blank">Google AI Studio</a></p>
+        </div>
+
+        <div class="button-container">
+            <button id="saveBtn">Save API Key</button>
+            <button id="clearBtn">Clear</button>
+        </div>
+
+        <div id="status" class="status"></div>
+    </div>
+
+    <div class="footer">
+        <p>Using Gemini 2.0 Flash for summarization</p>
+        <p>Hover over any LinkedIn post and click "✨ Summarize"</p>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+
+</html>

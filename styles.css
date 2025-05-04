@@ -1,0 +1,107 @@
+/* Styles for the LinkedIn post summarizer extension */
+
+/* Summarize button */
+.linkedin-summarize-btn {
+    background-color: #f3f2f1;
+    border: none;
+    border-radius: 16px;
+    color: #0a66c2;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    margin: 8px 0;
+    padding: 6px 12px;
+    transition: all 0.2s ease;
+    display: block;
+    /* Changed from flex to block for better compatibility */
+    align-items: center;
+    max-width: fit-content;
+    position: relative;
+    /* Position relative to ensure it's visible */
+    z-index: 100;
+    /* Higher z-index to prevent it from being hidden */
+}
+
+.linkedin-summarize-btn:hover {
+    background-color: #e7f3ff;
+    color: #0045ac;
+}
+
+/* Summary container */
+.linkedin-summary-container {
+    background-color: #f9f9f9;
+    border: 1px solid #e6e6e6;
+    border-radius: 8px;
+    margin: 8px 0 12px;
+    padding: 12px;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+/* Summary loading indicator */
+.linkedin-summary-loading {
+    color: #666;
+    font-style: italic;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+}
+
+.linkedin-summary-loading:after {
+    content: "";
+    width: 16px;
+    height: 16px;
+    margin-left: 8px;
+    border: 2px solid #ddd;
+    border-radius: 50%;
+    border-top-color: #0a66c2;
+    animation: spin 1s linear infinite;
+    display: inline-block;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* Summary content */
+.linkedin-summary-content {
+    color: #333;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+/* Adjust for dark mode */
+@media (prefers-color-scheme: dark) {
+    .linkedin-summarize-btn {
+        background-color: #1d2226;
+        color: #70b5f9;
+    }
+
+    .linkedin-summarize-btn:hover {
+        background-color: #283136;
+    }
+
+    .linkedin-summary-container {
+        background-color: #1d2226;
+        border-color: #38434f;
+    }
+
+    .linkedin-summary-loading {
+        color: #b3b3b3;
+    }
+
+    .linkedin-summary-loading:after {
+        border-color: #38434f;
+        border-top-color: #70b5f9;
+    }
+
+    .linkedin-summary-content {
+        color: #e6e6e6;
+    }
+}
