@@ -64,15 +64,15 @@ function processLinkedInPosts() {
         // Skip if the content is too short (likely not a meaningful post)
         if (contentDiv.textContent.trim().length < 30) return;
 
-        // Create summarize button
-        const summarizeBtn = document.createElement('button');
-        summarizeBtn.className = 'linkedin-summarize-btn';
-        summarizeBtn.textContent = '✨ Summarize';
+        // Create toggle button (hidden initially, will be shown once summary is ready)
+        const toggleBtn = document.createElement('button');
+        toggleBtn.className = 'linkedin-toggle-btn';
+        toggleBtn.textContent = '✨ Hide Summary';
+        toggleBtn.style.display = 'none';
 
-        // Create summary container (hidden initially)
+        // Create summary container
         const summaryContainer = document.createElement('div');
         summaryContainer.className = 'linkedin-summary-container';
-        summaryContainer.style.display = 'none';
 
         // Create loading indicator
         const loadingIndicator = document.createElement('div');
@@ -87,72 +87,68 @@ function processLinkedInPosts() {
         summaryContainer.appendChild(loadingIndicator);
         summaryContainer.appendChild(summaryContent);
 
-        // Find the parent container of the post to place our button after the content
+        // Find the parent container of the post to place our summary after the content
         const postContainer = contentDiv.closest('.feed-shared-update-v2') ||
             contentDiv.closest('.ember-view.occludable-update') ||
             contentDiv.closest('[data-id^="urn:li:activity"]');
 
         if (postContainer) {
-            // Try to find the social actions area to place the button near the like/comment buttons
+            // Try to find the social actions area to place the summary near the like/comment buttons
             const socialActionsArea = postContainer.querySelector('.social-details-social-counts') ||
                 postContainer.querySelector('.feed-shared-social-actions') ||
                 postContainer.querySelector('.feed-shared-social-counts-module');
 
             if (socialActionsArea) {
                 // Insert near the social actions area
-                socialActionsArea.parentNode.insertBefore(summarizeBtn, socialActionsArea.nextSibling);
-                socialActionsArea.parentNode.insertBefore(summaryContainer, summarizeBtn.nextSibling);
+                socialActionsArea.parentNode.insertBefore(toggleBtn, socialActionsArea.nextSibling);
+                socialActionsArea.parentNode.insertBefore(summaryContainer, toggleBtn.nextSibling);
             } else {
                 // If no social actions area, insert directly after the content div
-                contentDiv.parentNode.insertBefore(summarizeBtn, contentDiv.nextSibling);
-                contentDiv.parentNode.insertBefore(summaryContainer, summarizeBtn.nextSibling);
+                contentDiv.parentNode.insertBefore(toggleBtn, contentDiv.nextSibling);
+                contentDiv.parentNode.insertBefore(summaryContainer, toggleBtn.nextSibling);
             }
         } else {
             // Fallback: Insert directly after the content div
-            contentDiv.parentNode.insertBefore(summarizeBtn, contentDiv.nextSibling);
-            contentDiv.parentNode.insertBefore(summaryContainer, summarizeBtn.nextSibling);
+            contentDiv.parentNode.insertBefore(toggleBtn, contentDiv.nextSibling);
+            contentDiv.parentNode.insertBefore(summaryContainer, toggleBtn.nextSibling);
         }
 
-        // Add click event to the button
-        summarizeBtn.addEventListener('click', async () => {
+        // Automatically generate summary
+        try {
+            // Get the post text
+            const postText = contentDiv.textContent.trim();
+
+            console.log("Auto-summarizing post:", postText.substring(0, 100) + "...");
+
+            // Send message to background script to get summary
+            chrome.runtime.sendMessage(
+                { action: 'summarize', text: postText },
+                response => {
+                    loadingIndicator.style.display = 'none';
+                    toggleBtn.style.display = 'inline-block'; // Show toggle button when summary is ready
+
+                    if (response.error) {
+                        summaryContent.textContent = `Error: ${response.error}`;
+                    } else {
+                        summaryContent.innerHTML = `<strong>Summary:</strong> ${response.summary}`;
+                    }
+                }
+            );
+        } catch (error) {
+            loadingIndicator.style.display = 'none';
+            summaryContent.textContent = `Error: ${error.message}`;
+            console.error("Summarization error:", error);
+        }
+
+        // Add click event to the toggle button
+        toggleBtn.addEventListener('click', () => {
             // Toggle summary visibility
             if (summaryContainer.style.display === 'none') {
                 summaryContainer.style.display = 'block';
-
-                // Only fetch summary if it hasn't been loaded yet
-                if (!summaryContent.textContent) {
-                    loadingIndicator.style.display = 'block';
-
-                    try {
-                        // Get the post text
-                        const postText = contentDiv.textContent.trim();
-
-                        console.log("Found post text:", postText.substring(0, 100) + "...");
-
-                        // Send message to background script to get summary
-                        chrome.runtime.sendMessage(
-                            { action: 'summarize', text: postText },
-                            response => {
-                                loadingIndicator.style.display = 'none';
-
-                                if (response.error) {
-                                    summaryContent.textContent = `Error: ${response.error}`;
-                                } else {
-                                    summaryContent.textContent = response.summary;
-                                }
-                            }
-                        );
-                    } catch (error) {
-                        loadingIndicator.style.display = 'none';
-                        summaryContent.textContent = `Error: ${error.message}`;
-                        console.error("Summarization error:", error);
-                    }
-                }
-
-                summarizeBtn.textContent = '✨ Hide Summary';
+                toggleBtn.textContent = '✨ Hide Summary';
             } else {
                 summaryContainer.style.display = 'none';
-                summarizeBtn.textContent = '✨ Summarize';
+                toggleBtn.textContent = '✨ Show Summary';
             }
         });
     });
